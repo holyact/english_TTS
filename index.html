@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>English Repeat Reader</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+KR:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+    --accent: #4f8ef7; --accent-glow: rgba(79,142,247,0.18); --accent2: #a78bfa;
+    --text: #e8eaf0; --text-muted: #7a7f9a; --green: #34d399; --radius: 14px;
+  }
+  body {
+    font-family: 'Inter', 'Noto Sans KR', sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; padding: 28px 16px 80px;
+  }
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 {
+    font-size: 1.6rem; font-weight: 600;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  header p { color: var(--text-muted); font-size: 0.88rem; margin-top: 6px; font-family: 'Noto Sans KR', sans-serif; line-height: 1.5; }
+  .card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid rgba(255,255,255,0.06); padding: 20px;
+    width: 100%; max-width: 680px; margin-bottom: 14px;
+  }
+  .card-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+  #text-area {
+    width: 100%; min-height: 180px;
+    background: var(--surface2); border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 10px; color: var(--text); font-size: 1.05rem;
+    line-height: 1.85; padding: 14px 16px; resize: vertical;
+    font-family: 'Inter', sans-serif; transition: border-color 0.2s;
+    -webkit-user-select: text; user-select: text;
+  }
+  #text-area:focus { outline: none; border-color: var(--accent); }
+  #text-area::placeholder { color: var(--text-muted); font-size: 0.95rem; }
+  .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 9px; font-family: 'Noto Sans KR', sans-serif; line-height: 1.5; }
+  #selected-box {
+    background: var(--surface2); border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 14px 16px; min-height: 56px;
+    font-size: 1rem; line-height: 1.75; word-break: break-word;
+    color: var(--text-muted); font-style: italic;
+    transition: border-color 0.25s, background 0.25s; margin-bottom: 18px;
+  }
+  #selected-box.has-text { border-color: var(--accent); background: var(--accent-glow); color: var(--text); font-style: normal; }
+  .controls-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .repeat-control, .speed-control {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2); border-radius: 10px;
+    padding: 9px 14px; border: 1px solid rgba(255,255,255,0.08);
+  }
+  .ctrl-label { font-size: 0.82rem; color: var(--text-muted); font-family: 'Noto Sans KR', sans-serif; white-space: nowrap; }
+  .round-btn {
+    background: rgba(255,255,255,0.08); border: none; color: var(--text);
+    width: 34px; height: 34px; border-radius: 8px; font-size: 1.2rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+  }
+  .round-btn:active { background: rgba(255,255,255,0.2); }
+  #repeat-count { font-size: 1.1rem; font-weight: 600; min-width: 26px; text-align: center; }
+  #speed-range {
+    -webkit-appearance: none; width: 88px; height: 4px;
+    background: rgba(255,255,255,0.12); border-radius: 2px; cursor: pointer;
+  }
+  #speed-range::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--accent); cursor: pointer;
+  }
+  #speed-val { font-size: 0.82rem; color: var(--accent); font-weight: 600; min-width: 32px; }
+  .btn-row { display: flex; gap: 10px; }
+  .btn {
+    flex: 1; padding: 15px 0; border-radius: 11px; border: none;
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    -webkit-tap-highlight-color: transparent; text-align: center;
+  }
+  .btn-play { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 4px 18px rgba(79,142,247,0.3); }
+  .btn-play:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+  .btn-play:not(:disabled):active { transform: scale(0.97); }
+  .btn-stop { background: rgba(255,80,80,0.12); color: #ff6b6b; border: 1px solid rgba(255,80,80,0.25); display: none; flex: 0 0 auto; padding: 15px 20px; }
+  .progress-area { display: none; margin-top: 16px; }
+  .progress-area.visible { display: block; }
+  .progress-bar-wrap { background: var(--surface2); border-radius: 6px; height: 6px; overflow: hidden; margin-bottom: 8px; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 6px; transition: width 0.35s; width: 0%; }
+  .progress-text { font-size: 0.83rem; color: var(--text-muted); font-family: 'Noto Sans KR', sans-serif; }
+  .progress-text strong { color: var(--green); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>English Repeat Reader</h1>
+  <p>영어 문장을 드래그해서 선택하고<br>원하는 횟수만큼 반복해서 들어보세요</p>
+</header>
+
+<div class="card">
+  <div class="card-label">STEP 1 — 영어 텍스트 입력 후 읽을 부분 드래그 선택</div>
+  <textarea id="text-area" placeholder="영어 문장을 여기에 붙여넣으세요.
+
+예) The Lord is my shepherd; I shall not want.
+He makes me lie down in green pastures.
+He leads me beside still waters."></textarea>
+  <p class="hint">PC: 마우스로 드래그 &nbsp;|&nbsp; 스마트폰: 단어를 꾹 눌러서 선택 범위를 조절하세요.</p>
+</div>
+
+<div class="card">
+  <div class="card-label">STEP 2 — 선택 확인 &amp; 재생</div>
+  <div id="selected-box">선택된 문장이 여기에 표시됩니다.</div>
+  <div class="controls-row">
+    <div class="repeat-control">
+      <button class="round-btn" id="btn-minus">-</button>
+      <span class="ctrl-label">반복</span>
+      <div id="repeat-count">3</div>
+      <span class="ctrl-label">회</span>
+      <button class="round-btn" id="btn-plus">+</button>
+    </div>
+    <div class="speed-control">
+      <span class="ctrl-label">속도</span>
+      <input type="range" id="speed-range" min="0.5" max="1.5" step="0.1" value="0.9">
+      <div id="speed-val">0.9x</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-play" id="btn-play" disabled>재생 시작</button>
+    <button class="btn btn-stop" id="btn-stop">중지</button>
+  </div>
+  <div class="progress-area" id="progress-area">
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    <div class="progress-text" id="progress-text"></div>
+  </div>
+</div>
+
+<script>
+  var textArea     = document.getElementById('text-area');
+  var selectedBox  = document.getElementById('selected-box');
+  var repeatEl     = document.getElementById('repeat-count');
+  var btnPlay      = document.getElementById('btn-play');
+  var btnStop      = document.getElementById('btn-stop');
+  var progressArea = document.getElementById('progress-area');
+  var progressBar  = document.getElementById('progress-bar');
+  var progressText = document.getElementById('progress-text');
+  var speedRange   = document.getElementById('speed-range');
+  var speedVal     = document.getElementById('speed-val');
+
+  var selectedText = '';
+  var repeatCount  = 3;
+  var isPlaying    = false;
+  var stopFlag     = false;
+
+  function checkSelection() {
+    var start = textArea.selectionStart;
+    var end   = textArea.selectionEnd;
+    if (end > start) {
+      var text = textArea.value.substring(start, end).trim();
+      if (text) setSelected(text);
+    }
+  }
+
+  textArea.addEventListener('mouseup', checkSelection);
+  textArea.addEventListener('keyup', checkSelection);
+  textArea.addEventListener('touchend', function() { setTimeout(checkSelection, 150); });
+  document.addEventListener('selectionchange', function() {
+    if (document.activeElement === textArea) setTimeout(checkSelection, 100);
+  });
+
+  function setSelected(text) {
+    selectedText = text;
+    selectedBox.textContent = '"' + text + '"';
+    selectedBox.className = 'has-text';
+    btnPlay.disabled = false;
+  }
+
+  document.getElementById('btn-minus').addEventListener('click', function() {
+    if (repeatCount > 1) { repeatCount--; repeatEl.textContent = repeatCount; }
+  });
+  document.getElementById('btn-plus').addEventListener('click', function() {
+    if (repeatCount < 20) { repeatCount++; repeatEl.textContent = repeatCount; }
+  });
+
+  speedRange.addEventListener('input', function() {
+    speedVal.textContent = parseFloat(speedRange.value).toFixed(1) + 'x';
+  });
+
+  btnPlay.addEventListener('click', async function() {
+    if (!selectedText || isPlaying) return;
+    isPlaying = true; stopFlag = false;
+    btnPlay.disabled = true;
+    btnPlay.textContent = '재생 중...';
+    btnStop.style.display = '';
+    progressArea.classList.add('visible');
+    progressBar.style.width = '0%';
+
+    for (var i = 1; i <= repeatCount; i++) {
+      if (stopFlag) break;
+      progressBar.style.width = Math.round(((i-1)/repeatCount)*100) + '%';
+      progressText.innerHTML = '<strong>' + i + '번째</strong> / 총 ' + repeatCount + '번';
+      await speak(selectedText);
+      if (stopFlag) break;
+      if (i < repeatCount) await delay(450);
+    }
+
+    if (!stopFlag) {
+      progressBar.style.width = '100%';
+      progressText.innerHTML = '<strong>' + repeatCount + '번</strong> 완료!';
+    } else {
+      progressText.innerHTML = '중지됐어요.';
+    }
+
+    isPlaying = false;
+    btnPlay.disabled = false;
+    btnPlay.textContent = '재생 시작';
+    btnStop.style.display = 'none';
+  });
+
+  btnStop.addEventListener('click', function() {
+    stopFlag = true;
+    window.speechSynthesis.cancel();
+  });
+
+  function speak(text) {
+    return new Promise(function(resolve) {
+      window.speechSynthesis.cancel();
+      var utter = new SpeechSynthesisUtterance(text);
+      utter.lang  = 'en-US';
+      utter.rate  = parseFloat(speedRange.value);
+      utter.pitch = 1.0;
+      var voices  = window.speechSynthesis.getVoices();
+      var enVoice = voices.find(function(v){ return v.lang === 'en-US'; }) ||
+                    voices.find(function(v){ return v.lang.startsWith('en'); });
+      if (enVoice) utter.voice = enVoice;
+      utter.onend = resolve; utter.onerror = resolve;
+      window.speechSynthesis.speak(utter);
+    });
+  }
+
+  function delay(ms) { return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+</script>
+</body>
+</html>

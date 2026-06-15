@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>English Repeat Reader</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto Sans+KR:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+KR:wght@400;500&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
@@ -17,7 +17,7 @@
     font-family: 'Inter','Noto Sans KR',sans-serif;
     background: var(--bg); color: var(--text);
     min-height: 100vh; display: flex; flex-direction: column;
-    align-items: center; padding: 28px 16px 80px;
+    align-items: center; padding: 28px 16px 120px;
   }
   header { text-align: center; margin-bottom: 24px; }
   header h1 {
@@ -32,8 +32,6 @@
     border: 1px solid rgba(255,255,255,0.06); padding: 20px;
     width: 100%; max-width: 700px; margin-bottom: 12px;
   }
-
-  /* ── STEP 1 헤더 (항상 보임) ── */
   .card-header {
     display: flex; align-items: center; justify-content: space-between;
     cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;
@@ -54,27 +52,14 @@
   .toggle-arrow { font-size: 0.7rem; transition: transform 0.25s; display: inline-block; }
   .toggle-arrow.open { transform: rotate(180deg); }
 
-  /* 접히는 영역 */
   .collapsible {
-    overflow: hidden;
-    max-height: 0;
+    overflow: hidden; max-height: 0;
     transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.3s ease;
-    opacity: 0;
-    margin-top: 0;
+    opacity: 0; margin-top: 0;
   }
-  .collapsible.expanded {
-    max-height: 600px;
-    opacity: 1;
-    margin-top: 14px;
-  }
+  .collapsible.expanded { max-height: 600px; opacity: 1; margin-top: 14px; }
 
-  /* 분리 완료 요약줄 */
-  #input-summary {
-    display: none;
-    margin-top: 10px;
-    font-size: 0.82rem; color: var(--text-muted);
-    font-family: 'Noto Sans KR',sans-serif;
-  }
+  #input-summary { display: none; margin-top: 10px; font-size: 0.82rem; color: var(--text-muted); }
   #input-summary span { color: var(--accent); font-weight: 600; }
 
   #text-area {
@@ -145,27 +130,36 @@
   .sentence-item.playing  .sentence-num { color: var(--yellow); }
   .sentence-txt { font-size: 0.97rem; line-height: 1.75; flex: 1; }
 
-  /* ── STEP 3 ── */
-  #selected-box {
-    background: var(--surface2); border: 1.5px solid rgba(255,255,255,0.08);
-    border-radius: 10px; padding: 13px 15px; min-height: 52px;
-    font-size: 0.93rem; line-height: 1.75; word-break: break-word;
-    color: var(--text-muted); font-style: italic;
-    transition: border-color 0.25s, background 0.25s; margin-bottom: 16px;
-    max-height: 140px; overflow-y: auto;
+  /* ── 하단 고정 재생바 ── */
+  .sticky-player {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15,17,23,0.92);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 12px 16px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 100;
   }
-  #selected-box.has-text { border-color: var(--accent); background: var(--accent-glow); color: var(--text); font-style: normal; }
-  .preview-item { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .preview-item:last-child { border-bottom: none; }
-  .preview-num { font-size: 0.72rem; color: var(--accent); font-weight: 700; margin-right: 6px; }
 
-  .controls-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  /* Wake Lock 상태 표시 */
+  #wakelock-badge {
+    display: none;
+    font-size: 0.72rem; color: var(--green);
+    background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 20px; padding: 2px 10px; align-self: flex-start;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  #wakelock-badge.visible { display: inline-block; }
+
+  .player-top {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
   .ctrl-group {
     display: flex; align-items: center; gap: 7px;
     background: var(--surface2); border-radius: 10px;
-    padding: 8px 13px; border: 1px solid rgba(255,255,255,0.07);
+    padding: 7px 12px; border: 1px solid rgba(255,255,255,0.07);
   }
-  .ctrl-label { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+  .ctrl-label { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
   .round-btn {
     background: rgba(255,255,255,0.08); border: none; color: var(--text);
     width: 32px; height: 32px; border-radius: 7px; font-size: 1.1rem;
@@ -175,16 +169,16 @@
   .round-btn:active { background: rgba(255,255,255,0.18); }
   #repeat-count { font-size: 1.05rem; font-weight: 600; min-width: 24px; text-align: center; }
   #speed-range {
-    -webkit-appearance: none; width: 82px; height: 4px;
+    -webkit-appearance: none; width: 80px; height: 4px;
     background: rgba(255,255,255,0.12); border-radius: 2px; cursor: pointer;
   }
   #speed-range::-webkit-slider-thumb {
     -webkit-appearance: none; width: 20px; height: 20px;
     border-radius: 50%; background: var(--accent); cursor: pointer;
   }
-  #speed-val { font-size: 0.8rem; color: var(--accent); font-weight: 600; min-width: 30px; }
+  #speed-val { font-size: 0.78rem; color: var(--accent); font-weight: 600; min-width: 28px; }
 
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-row { display: flex; gap: 8px; }
   .btn {
     padding: 13px 0; border-radius: 10px; border: none;
     font-size: 0.93rem; font-weight: 600; cursor: pointer;
@@ -198,11 +192,11 @@
   .btn-all:disabled  { opacity: 0.32; cursor: not-allowed; }
   .btn-stop { background: rgba(255,80,80,0.12); color: #ff6b6b; border: 1px solid rgba(255,80,80,0.25); display: none; flex: 0 0 auto; padding: 13px 18px; }
 
-  .progress-area { display: none; margin-top: 14px; }
+  .progress-area { display: none; }
   .progress-area.visible { display: block; }
-  .progress-bar-wrap { background: var(--surface2); border-radius: 6px; height: 5px; overflow: hidden; margin-bottom: 7px; }
+  .progress-bar-wrap { background: var(--surface2); border-radius: 6px; height: 5px; overflow: hidden; margin-bottom: 6px; }
   .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 6px; transition: width 0.3s; width: 0%; }
-  .progress-text { font-size: 0.8rem; color: var(--text-muted); }
+  .progress-text { font-size: 0.78rem; color: var(--text-muted); }
   .progress-text strong { color: var(--green); }
 </style>
 </head>
@@ -223,8 +217,6 @@
     </button>
   </div>
   <div id="input-summary"></div>
-
-  <!-- 접히는 영역 -->
   <div class="collapsible expanded" id="collapsible-input">
     <textarea id="text-area" placeholder="영어 문장을 여기에 붙여넣으세요.
 
@@ -249,11 +241,10 @@ He restores my soul."></textarea>
   <div id="sentence-list"></div>
 </div>
 
-<!-- STEP 3 -->
-<div class="card">
-  <div class="card-label">STEP 3 — 선택 확인 &amp; 재생</div>
-  <div id="selected-box">체크한 문장들이 여기에 표시됩니다.</div>
-  <div class="controls-row">
+<!-- 하단 고정 재생바 -->
+<div class="sticky-player">
+  <span id="wakelock-badge">📱 화면 켜짐 유지 중</span>
+  <div class="player-top">
     <div class="ctrl-group">
       <button class="round-btn" id="btn-minus">-</button>
       <span class="ctrl-label">반복</span>
@@ -282,7 +273,6 @@ He restores my soul."></textarea>
   var textArea     = document.getElementById('text-area');
   var sentenceList = document.getElementById('sentence-list');
   var cardSent     = document.getElementById('card-sentences');
-  var selectedBox  = document.getElementById('selected-box');
   var repeatEl     = document.getElementById('repeat-count');
   var checkCountEl = document.getElementById('check-count');
   var btnPlay      = document.getElementById('btn-play');
@@ -293,12 +283,11 @@ He restores my soul."></textarea>
   var progressText = document.getElementById('progress-text');
   var speedRange   = document.getElementById('speed-range');
   var speedVal     = document.getElementById('speed-val');
-
   var collapsible  = document.getElementById('collapsible-input');
-  var toggleBtn    = document.getElementById('toggle-btn');
   var toggleLabel  = document.getElementById('toggle-label');
   var toggleArrow  = document.getElementById('toggle-arrow');
   var inputSummary = document.getElementById('input-summary');
+  var wakeLockBadge= document.getElementById('wakelock-badge');
 
   var sentences   = [];
   var checked     = [];
@@ -306,19 +295,38 @@ He restores my soul."></textarea>
   var isPlaying   = false;
   var stopFlag    = false;
   var isExpanded  = true;
+  var wakeLock    = null;
 
-  // ── 접기/펼치기 ──
-  document.getElementById('step1-header').addEventListener('click', function() {
-    toggleInput();
+  // ── Wake Lock ──
+  async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLockBadge.classList.add('visible');
+      wakeLock.addEventListener('release', function() {
+        wakeLockBadge.classList.remove('visible');
+      });
+    } catch(e) { console.log('WakeLock 실패:', e); }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release(); wakeLock = null; }
+    wakeLockBadge.classList.remove('visible');
+  }
+
+  // 화면이 다시 켜지면 재생 중일 때 Wake Lock 재요청
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && isPlaying) requestWakeLock();
   });
 
+  // ── 접기/펼치기 ──
+  document.getElementById('step1-header').addEventListener('click', toggleInput);
   function toggleInput() {
     isExpanded = !isExpanded;
     collapsible.classList.toggle('expanded', isExpanded);
     toggleLabel.textContent = isExpanded ? '접기' : '펼치기';
     toggleArrow.classList.toggle('open', isExpanded);
   }
-
   function collapseInput() {
     isExpanded = false;
     collapsible.classList.remove('expanded');
@@ -337,25 +345,18 @@ He restores my soul."></textarea>
     cardSent.style.display = '';
     btnAll.disabled = false;
     updatePreview();
-
-    // 분리 후 자동으로 접기
     collapseInput();
     inputSummary.style.display = 'block';
-    inputSummary.innerHTML = '총 <span>' + sentences.length + '개</span> 문장이 분리됐어요. 헤더를 눌러 수정할 수 있어요.';
+    inputSummary.innerHTML = '총 <span>' + sentences.length + '개</span> 문장 분리됨. 헤더를 눌러 수정하세요.';
   });
 
-  // ── 렌더링 ──
   function renderSentences() {
     sentenceList.innerHTML = '';
     sentences.forEach(function(s, i) {
-      var div = document.createElement('div');
-      div.className = 'sentence-item';
-      div.dataset.idx = i;
-
+      var div = document.createElement('div'); div.className = 'sentence-item'; div.dataset.idx = i;
       var cb  = document.createElement('div'); cb.className = 'custom-cb';
       var num = document.createElement('span'); num.className = 'sentence-num'; num.textContent = (i+1);
       var txt = document.createElement('span'); txt.className = 'sentence-txt'; txt.textContent = s;
-
       div.appendChild(cb); div.appendChild(num); div.appendChild(txt);
       div.addEventListener('click', function() { if (!isPlaying) toggleCheck(i); });
       sentenceList.appendChild(div);
@@ -367,8 +368,7 @@ He restores my soul."></textarea>
     checked[idx] = !checked[idx];
     var items = sentenceList.querySelectorAll('.sentence-item');
     items[idx].className = 'sentence-item' + (checked[idx] ? ' checked' : '');
-    updateCheckCount();
-    updatePreview();
+    updateCheckCount(); updatePreview();
   }
 
   function setAllChecked(val) {
@@ -386,18 +386,7 @@ He restores my soul."></textarea>
     btnPlay.disabled = (cnt === 0);
   }
 
-  function updatePreview() {
-    var picked = [];
-    checked.forEach(function(v, i){ if (v) picked.push(i); });
-    if (picked.length === 0) {
-      selectedBox.innerHTML = '체크한 문장들이 여기에 표시됩니다.';
-      selectedBox.className = ''; return;
-    }
-    selectedBox.className = 'has-text';
-    selectedBox.innerHTML = picked.map(function(i){
-      return '<div class="preview-item"><span class="preview-num">' + (i+1) + '</span>' + sentences[i] + '</div>';
-    }).join('');
-  }
+  function updatePreview() { /* 미리보기 제거 — 하단 바가 항상 보이므로 불필요 */ }
 
   document.getElementById('btn-select-all').addEventListener('click',   function(){ setAllChecked(true);  });
   document.getElementById('btn-deselect-all').addEventListener('click', function(){ setAllChecked(false); });
@@ -408,7 +397,6 @@ He restores my soul."></textarea>
   document.getElementById('btn-plus').addEventListener('click', function() {
     if (repeatCount < 20) { repeatCount++; repeatEl.textContent = repeatCount; }
   });
-
   speedRange.addEventListener('input', function() {
     speedVal.textContent = parseFloat(speedRange.value).toFixed(1) + 'x';
   });
@@ -480,6 +468,7 @@ He restores my soul."></textarea>
     btnStop.style.display = '';
     progressArea.classList.add('visible');
     progressBar.style.width = '0%';
+    requestWakeLock();
   }
 
   function finishPlaying() {
@@ -493,6 +482,7 @@ He restores my soul."></textarea>
     btnAll.disabled  = (sentences.length === 0);
     btnPlay.textContent = '▶ 체크 문장 반복';
     btnStop.style.display = 'none';
+    releaseWakeLock();
   }
 
   function speak(text) {
